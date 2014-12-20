@@ -1,0 +1,16 @@
+SCC<- readRDS("./summarySCC_PM25.rds")
+Source<- readRDS("./Source_Classification_Code.rds")
+SCCM<- merge(SCC,Source[c(1,4)], by="SCC")
+# subset of Baltimore city
+library(dplyr)
+library(tidyr)
+library(plyr)
+SCCM_S<- SCCM  %>% filter( grepl("Vehicles$",EI.Sector) & (fips== "24510"|fips=="06037")) %>% select(fips,Emissions,year)
+SCCM_F<- ddply(SCCM_S, .(fips,year), summarize, Emissions=sum(Emissions))
+SCCMF<- SCCM_F %>% spread(fips, Emissions)
+names(SCCMF)<- c("year", "Emissions_LA","Emissions_BC")
+
+png("plot6''.png")
+p<- ggplot(SCCMF)
+p+geom_line(aes(year, Emissions_BC),linetype="dashed")+geom_line(aes(year, Emissions_LA))+ylab("Emissions")
+dev.off()
